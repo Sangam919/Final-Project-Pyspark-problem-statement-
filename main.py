@@ -1,8 +1,6 @@
-#Pyspark problem statement
-
 # Azure Databricks Data Engineering Project
 # Author: Sangam Srivastav 
-# Description: End-to-end pipeline for processing transaction data using Delta Lake on Azure Databricks
+# Description: Enhanced pipeline with insights & quality monitoring
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
@@ -13,12 +11,10 @@ import pandas as pd
 # ========================== 1. CONNECTION SETUP ==========================
 
 def setup_adls_connection():
-    """Establish connection with ADLS Gen2 using Databricks secrets"""
     try:
         storage_account = "mydatalake2004"
         container = "transaction-data"
         access_key = dbutils.secrets.get(scope="azure-storage", key="storage-access-key")
-
         spark.conf.set(f"fs.azure.account.key.{storage_account}.dfs.core.windows.net", access_key)
         print("✅ ADLS connection successful.")
         return storage_account, container
@@ -27,7 +23,6 @@ def setup_adls_connection():
         return None, None
 
 def verify_files_exist(account, container):
-    """Check if required CSV files are present in the container"""
     try:
         base_path = f"abfss://{container}@{account}.dfs.core.windows.net/"
         files = dbutils.fs.ls(base_path)
@@ -41,7 +36,6 @@ def verify_files_exist(account, container):
 # ========================== 2. DATA LOADING ==========================
 
 def load_csv(file_path, file_name):
-    """Load CSV from ADLS Gen2 and validate schema"""
     try:
         print(f"📥 Loading {file_name}...")
         df = spark.read.option("header", "true").option("inferSchema", "true").csv(file_path)
@@ -53,7 +47,6 @@ def load_csv(file_path, file_name):
         return None
 
 def load_transaction_data(account, container):
-    """Load transactions and products datasets"""
     path = f"abfss://{container}@{account}.dfs.core.windows.net/"
     return load_csv(path + "transactions.csv", "transactions"), load_csv(path + "products.csv", "products")
 
@@ -82,19 +75,40 @@ def enrich_channels(df):
                         .when(col("transaction_id").rlike("^MOB"), "mobile")
                         .otherwise("in-store"))
 
-# ========================== 5. ANALYTICS ==========================
+# ========================== 5. ANALYTICS & INSIGHTS ==========================
 
 def generate_analytics(transactions, products):
     joined = transactions.join(products, "product_id", "left")
+
     customer_df = joined.groupBy("customer_id").agg(
         count("transaction_id").alias("transactions"),
         sum(col("quantity") * col("price")).alias("revenue")
-    )
+    ).withColumn("avg_order_value", col("revenue") / col("transactions"))
+
     product_df = joined.groupBy("product_id").agg(
         sum("quantity").alias("sold"),
         sum(col("quantity") * col("price")).alias("revenue")
     )
-    return joined, customer_df, product_df
+
+    category_df = joined.groupBy("category").agg(
+        sum("quantity").alias("units_sold"),
+        sum(col("quantity") * col("price")).alias("category_revenue")
+    )
+
+    campaign_df = joined.groupBy("campaign_id").agg(
+        count("*").alias("transactions"),
+        sum(col("quantity") * col("price")).alias("campaign_revenue"),
+        countDistinct("customer_id").alias("unique_customers")
+    )
+
+    # Outlier detection on revenue
+    revenue_stats = customer_df.select(mean("revenue").alias("mean"), stddev("revenue").alias("std")).collect()[0]
+    mean_val, std_val = revenue_stats["mean"], revenue_stats["std"]
+    customer_df = customer_df.withColumn(
+        "is_outlier", (col("revenue") > (mean_val + 3 * std_val)) | (col("revenue") < (mean_val - 3 * std_val))
+    )
+
+    return joined, customer_df, product_df, category_df, campaign_df
 
 # ========================== 6. DELTA LAKE ==========================
 
@@ -106,6 +120,11 @@ def create_delta_table(df, table_name, db="analytics_db"):
 def optimize_table(table):
     spark.sql(f"OPTIMIZE {table} ZORDER BY (customer_id)")
     spark.sql(f"VACUUM {table} RETAIN 168 HOURS")
+
+def create_data_quality_table(df):
+    null_summary = df.select([count(when(col(c).isNull(), c)).alias(c) for c in df.columns])
+    null_summary = null_summary.withColumn("total_rows", lit(df.count()))
+    create_delta_table(null_summary, "data_quality_summary")
 
 # ========================== 7. PIPELINE EXECUTION ==========================
 
@@ -120,11 +139,15 @@ def execute_pipeline():
     tx_df, pr_df = clean_data(tx_df, "transactions"), clean_data(pr_df, "products")
     tx_df, pr_df = add_quality_flags(tx_df), add_quality_flags(pr_df)
     tx_df = enrich_channels(tx_df)
-    joined, cust_df, prod_df = generate_analytics(tx_df, pr_df)
+
+    joined, cust_df, prod_df, cat_df, camp_df = generate_analytics(tx_df, pr_df)
 
     create_delta_table(joined, "transactions_insights")
     create_delta_table(cust_df, "customer_analytics")
     create_delta_table(prod_df, "product_analytics")
+    create_delta_table(cat_df, "category_analytics")
+    create_delta_table(camp_df, "campaign_analytics")
+    create_data_quality_table(tx_df)
 
     optimize_table("analytics_db.transactions_insights")
     print("🎉 Pipeline execution complete.")
