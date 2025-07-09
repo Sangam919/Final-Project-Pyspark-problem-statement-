@@ -1,61 +1,62 @@
 🚀 Azure Transaction Analytics Platform
 
-A scalable, enterprise-grade data engineering pipeline for analyzing multi-channel transaction data using Azure Databricks, Delta Lake, and Azure Data Lake Storage Gen2. This platform provides actionable insights into customer behavior, product performance, and marketing campaign effectiveness.
-🎯 Overview
-The Azure Transaction Analytics Platform processes large-scale transaction data from web, mobile, and in-store channels, stored in ADLS Gen2. Built with Apache Spark and Delta Lake, it ensures efficient data processing, robust data quality monitoring, and optimized storage. The pipeline generates insights such as average order value per customer, popular products and categories, and campaign performance, storing results in managed Delta tables for downstream analytics.
-Key Features
+A powerful data engineering pipeline for analyzing multi-channel transaction data (web, mobile, in-store) using Azure Databricks, Delta Lake, and Azure Data Lake Storage Gen2. Unlock insights into customer behavior, product performance, and marketing campaign success with a scalable, robust solution.
 
-Multi-Channel Data Integration: Combines transaction data from web, mobile, and in-store channels.
-Advanced Analytics: Insights into customer behavior, product performance, and campaign ROI.
-Data Quality Monitoring: Detects missing values, outliers, and ensures data consistency.
-Scalable Processing: Leverages Apache Spark for high-performance data processing.
-Delta Lake Storage: Supports ACID transactions, time travel, and optimized storage.
-Modular Codebase: Reusable functions for maintainability and extensibility.
-Error Handling: Robust validation and error management for reliable execution.
+🌟 Why This Project?
+This platform processes large-scale transaction data, delivering actionable insights for businesses. Built with Apache Spark and Delta Lake, it ensures fast processing, reliable storage, and high data quality. Whether you're analyzing sales trends or campaign ROI, this pipeline has you covered.
+✨ Key Features
+
+Multi-Channel Analytics: Combines web, mobile, and in-store data.
+Actionable Insights: Tracks customer spending, top products, and campaign performance.
+Data Quality: Detects missing values and outliers for clean data.
+Scalable Processing: Handles big data with Spark’s distributed computing.
+Delta Lake Storage: Optimized storage with ACID transactions and time travel.
+Modular Code: Reusable, maintainable Python modules.
+Error Handling: Robust validation for reliable execution.
+
 
 🏗️ Architecture
-┌───────────────────────────┐    ┌────────────────────────┐    ┌──────────────────────┐
-│       Data Sources        │    │    Azure ADLS Gen2     │    │  Azure Databricks    │
-│                           │    │                        │    │                      │
-│  • Web Transactions       ├──▶│  • transactions/*.csv  │───▶│  • Data Loading      │
-│  • Mobile Transactions    │    │  • products.csv        │    │  • Cleaning          │
-│  • In-Store Transactions  │    │  • Delta Tables        │    │  • Analytics         │
-└───────────────────────────┘    └────────────────────────┘    │  • Quality Monitoring│
-                                                              │  • Delta Storage     │
-                                                              └──────────────────────┘
+┌──────────────┐    ┌──────────────┐    ┌─────────────────┐
+│ Data Sources │───▶│ ADLS Gen2    │───▶│ Azure Databricks │
+│ • Web        │    │ • CSV Files  │    │ • Load & Clean  │
+│ • Mobile     │    │ • Delta Tables│    │ • Analytics     │
+│ • In-Store   │    └──────────────┘    │ • Delta Storage │
+└──────────────┘                        └─────────────────┘
+
 
 📋 Prerequisites
 
-Azure Subscription with:
+Azure Subscription:
 Azure Data Lake Storage Gen2
 Azure Databricks workspace
 
 
-Databricks Cluster with:
-Apache Spark 3.4+
+Databricks Cluster:
+Spark 3.4+
 Delta Lake 2.4.0 (io.delta:delta-core_2.12:2.4.0)
 Python 3.8+
 
 
-ADLS Gen2 Configuration:
-Secret scope (azure-storage) with storage-access-key
-Transaction data in transactions/*.csv and product data in products.csv
+ADLS Gen2 Setup:
+Secret scope: azure-storage with storage-access-key
+Data files: transactions/*.csv and products.csv
 
 
 
-🚀 Quick Start
+
+🚀 Get Started
 1. Clone the Repository
 git clone https://github.com/Sangam919/Final-Project.git
 cd azure-transaction-analytics
 
-2. Configure ADLS Gen2 Credentials
-Set up a Databricks secret scope:
+2. Set Up ADLS Credentials
+Create a secret scope in Databricks:
 databricks secrets create-scope --scope azure-storage
 databricks secrets put --scope azure-storage --key storage-access-key
 
-Update src/config.py with your ADLS Gen2 storage account and container names (default: mydatalake2004, transaction-data).
-3. Upload Data to ADLS Gen2
-Ensure your ADLS Gen2 container has:
+Update src/config.py with your storage account and container (default: mydatalake2004, transaction-data).
+3. Prepare Data in ADLS Gen2
+Ensure your container has:
 /transaction-data/
 ├── transactions/
 │   ├── transaction_1.csv
@@ -63,16 +64,17 @@ Ensure your ADLS Gen2 container has:
 │   └── ...
 └── products.csv
 
-4. Deploy on Databricks
+4. Run in Databricks
 
-Import the repository into your Databricks workspace using Repos.
-Create a cluster with Delta Lake support (see Configuration below).
-Run the pipeline in a notebook:%run /Repos/<your-repo>/src/pipeline.py
+Import the repository to Databricks using Repos.
+Create a cluster (see Configuration below).
+Run the pipeline:%run /Repos/<your-repo>/src/pipeline.py
+
 
 
 
 📊 Data Schema
-Transaction Data (transactions/*.csv)
+Transactions (transactions/*.csv)
 
 
 
@@ -84,7 +86,7 @@ Description
 
 transaction_id
 String
-Unique transaction identifier
+Unique transaction ID
 
 
 customer_id
@@ -94,12 +96,12 @@ Unique customer ID
 
 product_id
 String
-Product involved in transaction
+Product ID
 
 
 quantity
 Integer
-Number of units purchased
+Units purchased
 
 
 price
@@ -109,15 +111,15 @@ Unit price
 
 transaction_date
 Timestamp
-Transaction date and time
+Date and time of transaction
 
 
 campaign_id
 String
-Marketing campaign identifier
+Marketing campaign ID
 
 
-Product Data (products.csv)
+Products (products.csv)
 
 
 
@@ -129,7 +131,7 @@ Description
 
 product_id
 String
-Unique product identifier
+Unique product ID
 
 
 description
@@ -147,6 +149,7 @@ Double
 Unit price
 
 
+
 🔧 Configuration
 Databricks Cluster
 {
@@ -160,85 +163,72 @@ Databricks Cluster
   }
 }
 
-Directory Structure
+Project Structure
 ├── src/
-│   ├── __init__.py           # Makes src a Python package
-│   ├── config.py             # ADLS connection and file verification
-│   ├── data_loader.py        # Data loading with predefined schemas
-│   ├── data_cleaner.py       # Data cleaning and quality checks
-│   ├── analytics.py          # Analytics and insights generation
-│   ├── delta_utils.py        # Delta Lake operations
-│   ├── pipeline.py           # Main pipeline orchestration
-├── README.md                 # Project documentation
-├── .gitignore                # Git ignore file
+│   ├── __init__.py       # Python package initializer
+│   ├── config.py         # ADLS connection setup
+│   ├── data_loader.py    # Loads CSV data
+│   ├── data_cleaner.py   # Cleans and validates data
+│   ├── analytics.py      # Generates insights
+│   ├── delta_utils.py    # Manages Delta tables
+│   ├── pipeline.py       # Orchestrates pipeline
+├── README.md             # Project documentation
+├── .gitignore            # Git ignore file
+├── LICENSE               # MIT License
 
-📊 Analytics Features
-Customer Analytics
 
-Average order value per customer
-Total revenue and transaction count per customer
-Outlier detection for customer revenue
+📈 Analytics Outputs
 
-Product Analytics
+Customer Analytics:
+Average order value
+Total revenue and transactions
+Revenue outlier detection
 
-Top-selling products by quantity and revenue
-Product performance by description
 
-Category Analytics
+Product Analytics:
+Top products by sales and revenue
+Product details (description)
 
-Category performance by units sold and revenue
 
-Marketing Campaign Analysis
+Category Analytics:
+Category sales and revenue
 
-Campaign revenue and transaction count
-Unique customers per campaign
 
-Data Quality Monitoring
+Campaign Analytics:
+Campaign revenue, transactions, and unique customers
 
-Missing value detection and reporting
+
+Data Quality:
+Null value reports
 Outlier detection for quantity, price, and revenue
-Data quality scoring and metadata tracking
-Persistent quality metrics in data_quality_summary Delta table
+Quality metrics in analytics_db.data_quality_summary
 
-🏃‍♂️ Usage Example
-Run the pipeline in a Databricks notebook:
+
+
+
+🏃‍♂️ Run the Pipeline
+In a Databricks notebook:
 %run /Repos/<your-repo>/src/pipeline.py
 
-This executes the full pipeline, which:
-
-Connects to ADLS Gen2
-Loads transaction and product data
-Cleans and enriches data with channel information
-Generates analytics
-Saves results to Delta tables in analytics_db
-Optimizes storage and monitors data quality
-
-Query the results in Databricks:
+Query results:
 SELECT * FROM analytics_db.customer_analytics LIMIT 5;
 SELECT * FROM analytics_db.data_quality_summary;
 
-🛠️ Development
-Adding New Features
 
-Extend analytics.py for additional insights (e.g., time-series analysis).
-Update data_cleaner.py for new quality checks.
-Modify pipeline.py to include new steps.
+🛠️ Extend the Project
 
-Testing
+Add Features: Enhance analytics.py for time-series or segmentation.
+Improve Quality: Add more checks in data_cleaner.py.
+Automate: Schedule with Databricks Workflows.
+Visualize: Create dashboards in Databricks or Power BI.
 
-Test each module (config.py, data_loader.py, etc.) in a Databricks notebook.
-Use sample data to validate analytics output.
-
-📈 Future Improvements
-
-Add unit tests for each module using pytest.
-Implement incremental data loading for streaming updates.
-Schedule the pipeline using Databricks Workflows.
-Integrate visualizations with Databricks Dashboards or Power BI.
 
 📜 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - Copyright (c) 2025 Sangam Srivastav
+
 🙌 Acknowledgments
 
-Built with ❤️ by Sangam Srivastav
-Powered by Apache Spark, Delta Lake, and Azure Databricks
+Author: Sangam Srivastav
+Tech Stack: Apache Spark, Delta Lake, Azure Databricks
+Inspiration: Modern data engineering for scalable analytics
+
