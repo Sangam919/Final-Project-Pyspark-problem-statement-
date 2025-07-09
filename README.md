@@ -2,114 +2,117 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Apache Spark](https://img.shields.io/badge/Apache%20Spark-3.0+-orange.svg)](https://spark.apache.org/)
-[![Delta Lake](https://img.shields.io/badge/Delta%20Lake-2.0+-green.svg)](https://delta.io/)
+[![Apache Spark](https://img.shields.io/badge/Apache%20Spark-3.4+-orange.svg)](https://spark.apache.org/)
+[![Delta Lake](https://img.shields.io/badge/Delta%20Lake-2.4.0+-green.svg)](https://delta.io/)
 [![Azure](https://img.shields.io/badge/Azure-Data%20Lake%20Gen2-blue.svg)](https://azure.microsoft.com/en-us/services/storage/data-lake-storage/)
 
-A comprehensive enterprise-grade solution for analyzing multi-channel transaction data using Azure Databricks, Delta Lake, and Azure Data Lake Storage Gen2. This platform provides real-time insights into customer behavior, product performance, and marketing campaign effectiveness.
+A powerful data engineering pipeline for analyzing multi-channel transaction data (web, mobile, in-store) using Azure Databricks, Delta Lake, and Azure Data Lake Storage Gen2. Unlock insights into customer behavior, product performance, and marketing campaign success with a scalable, robust solution.
 
-## 🎯 Overview
+## 🌟 Why This Project?
 
-The Azure Transaction Analytics Platform is designed to handle large-scale transaction data from multiple channels (web, mobile, in-store) and provide actionable business insights. Built with modern data engineering best practices, it leverages the power of Apache Spark and Delta Lake for efficient data processing and storage.
+This platform processes large-scale transaction data, delivering actionable insights for businesses. Built with Apache Spark and Delta Lake, it ensures fast processing, reliable storage, and high data quality. Whether you're analyzing sales trends or campaign ROI, this pipeline has you covered.
 
-### Key Features
+## ✨ Key Features
 
-* **Multi-Channel Data Integration**: Seamlessly combines transaction data from web, mobile, and in-store channels
-* **Real-Time Analytics**: Provides instant insights into customer behavior and sales performance
-* **Data Quality Monitoring**: Comprehensive data validation and quality assessment
-* **Scalable Architecture**: Built on Apache Spark for handling large datasets
-* **Delta Lake Integration**: ACID transactions and time travel capabilities
-* **Marketing Campaign Analysis**: Detailed ROI analysis for marketing campaigns
-* **Customer Segmentation**: Advanced customer analytics and segmentation
+* **Multi-Channel Analytics**: Combines web, mobile, and in-store data
+* **Actionable Insights**: Tracks customer spending, top products, and campaign performance
+* **Data Quality**: Detects missing values and outliers for clean data
+* **Scalable Processing**: Handles big data with Spark's distributed computing
+* **Delta Lake Storage**: Optimized storage with ACID transactions and time travel
+* **Modular Code**: Reusable, maintainable Python modules
+* **Error Handling**: Robust validation for reliable execution
 
 ## 🏗️ Architecture
 
 ```
-┌───────────────────────────┐    ┌────────────────────────┐    ┌──────────────────────┐
-│   Data Sources  │    │   Azure ADLS     │    │ Azure Databricks│
-│                 │    │     Gen2         │    │                 │
-│  • Web Store    ├──▶│                  │───▶│  • Data Loading │
-│  • Mobile App   │    │  • Raw Data      │    │  • Processing   │
-│  • In-Store POS │    │  • Processed     │    │  • Analytics    │
-└──────────────────────┘    │  • Delta Tables  │    │  • Validation   │
-                        └──────────────────┘    └──────────────────┘
-                                 ▲                        │
-                                 │                        │
-                                 └──────────────────────────────────────┘
-                                     Delta Lake Storage
+┌──────────────┐    ┌──────────────┐    ┌─────────────────┐
+│ Data Sources │───▶│ ADLS Gen2    │───▶│ Azure Databricks │
+│ • Web        │    │ • CSV Files  │    │ • Load & Clean  │
+│ • Mobile     │    │ • Delta Tables│    │ • Analytics     │
+│ • In-Store   │    └──────────────┘    │ • Delta Storage │
+└──────────────┘                        └─────────────────┘
 ```
 
 ## 📋 Prerequisites
 
-* **Azure Subscription** with access to:
+### Azure Subscription:
+* Azure Data Lake Storage Gen2
+* Azure Databricks workspace
 
-  * Azure Data Lake Storage Gen2
-  * Azure Databricks
-* **Python 3.8+**
-* **Apache Spark 3.0+**
-* **Delta Lake 2.0+**
+### Databricks Cluster:
+* Spark 3.4+
+* Delta Lake 2.4.0 (io.delta:delta-core_2.12:2.4.0)
+* Python 3.8+
 
-## 🚀 Quick Start
+### ADLS Gen2 Setup:
+* Secret scope: azure-storage with storage-access-key
+* Data files: transactions/*.csv and products.csv
+
+## 🚀 Get Started
 
 ### 1. Clone the Repository
 
 ```bash
-https://github.com/Sangam919/Final-Project.git
+git clone https://github.com/Sangam919/Final-Project.git
 cd azure-transaction-analytics
 ```
 
-### 2. Set Up Environment Variables
+### 2. Set Up ADLS Credentials
 
-Create a `.env` file:
+Create a secret scope in Databricks:
 
 ```bash
-AZURE_STORAGE_ACCOUNT_NAME=your_storage_account
-AZURE_STORAGE_ACCESS_KEY=your_access_key
-AZURE_CONTAINER_NAME=your_container_name
+databricks secrets create-scope --scope azure-storage
+databricks secrets put --scope azure-storage --key storage-access-key
 ```
 
-### 3. Upload Sample Data
+Update src/config.py with your storage account and container (default: mydatalake2004, transaction-data).
+
+### 3. Prepare Data in ADLS Gen2
+
+Ensure your container has:
 
 ```
-/your-container/
+/transaction-data/
 ├── transactions/
-│   ├── web_transactions.csv
-│   ├── mobile_transactions.csv
-│   └── in-store_transactions.csv
-└── products/
-    └── product_info.csv
+│   ├── transaction_1.csv
+│   ├── transaction_2.csv
+│   └── ...
+└── products.csv
 ```
 
-### 4. Deploy on Databricks
+### 4. Run in Databricks
 
-* Create a cluster with Delta Lake support
-* Upload and run the pipeline script or notebook
+1. Import the repository to Databricks using Repos
+2. Create a cluster (see Configuration below)
+3. Run the pipeline:
+
+```python
+%run /Repos/<your-repo>/src/pipeline.py
+```
 
 ## 📊 Data Schema
 
-### Transaction Data
+### Transactions (transactions/*.csv)
 
-| Column            | Type    | Description                     |
-| ----------------- | ------- | ------------------------------- |
-| transaction\_id   | String  | Unique transaction identifier   |
-| customer\_id      | String  | Unique customer ID              |
-| product\_id       | String  | Product involved in transaction |
-| quantity          | Integer | Number of units purchased       |
-| transaction\_date | Date    | Transaction date                |
-| channel           | String  | Sales channel (web/mobile/pos)  |
-| campaign\_id      | String  | Campaign identifier             |
-| amount            | Double  | Total transaction value         |
+| Column | Type | Description |
+|--------|------|-------------|
+| transaction_id | String | Unique transaction ID |
+| customer_id | String | Unique customer ID |
+| product_id | String | Product ID |
+| quantity | Integer | Units purchased |
+| price | Double | Unit price |
+| transaction_date | Timestamp | Date and time of transaction |
+| campaign_id | String | Marketing campaign ID |
 
-### Product Data
+### Products (products.csv)
 
-| Column        | Type   | Description               |
-| ------------- | ------ | ------------------------- |
-| product\_id   | String | Unique product identifier |
-| product\_name | String | Name of product           |
-| category      | String | Product category          |
-| price         | Double | Unit price                |
-| description   | String | Product description       |
-| brand         | String | Product brand             |
+| Column | Type | Description |
+|--------|------|-------------|
+| product_id | String | Unique product ID |
+| description | String | Product description |
+| category | String | Product category |
+| unit_price | Double | Unit price |
 
 ## 🔧 Configuration
 
@@ -117,60 +120,83 @@ AZURE_CONTAINER_NAME=your_container_name
 
 ```json
 {
-  "spark_version": "11.3.x-scala2.12",
+  "spark_version": "14.3.x-scala2.12",
   "node_type_id": "Standard_DS3_v2",
   "num_workers": 2,
   "spark_conf": {
+    "spark.jars.packages": "io.delta:delta-core_2.12:2.4.0",
     "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
     "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog"
   }
 }
 ```
 
-## 📊 Analytics Features
+### Project Structure
 
-### Customer Analytics
-
-* Average order value per customer
-* Customer lifetime value
-* Purchase frequency analysis
-* Customer segmentation (High Value, Frequent, Recent, Regular)
-
-### Product Analytics
-
-* Top-selling products
-* Category performance
-* Revenue by product
-* Inventory turnover analysis
-
-### Marketing Campaign Analysis
-
-* Campaign ROI calculation
-* Channel effectiveness
-* Customer acquisition cost
-* Campaign attribution analysis
-
-### Data Quality Monitoring
-
-* Missing value detection
-* Outlier identification
-* Data consistency checks
-* Quality score calculation
-
-## 🏃‍♂️ Usage Example
-
-```python
-from src.transaction_analyzer import TransactionAnalyzer
-
-analyzer = TransactionAnalyzer(
-    storage_account_name="datalake2004",
-    access_key="your_access_key is hide that why i not added here",
-    container_name="transaction-data"
-)
-
-results = analyzer.run_complete_analysis()
-analyzer.display_results(results)
+```
+├── src/
+│   ├── __init__.py       # Python package initializer
+│   ├── config.py         # ADLS connection setup
+│   ├── data_loader.py    # Loads CSV data
+│   ├── data_cleaner.py   # Cleans and validates data
+│   ├── analytics.py      # Generates insights
+│   ├── delta_utils.py    # Manages Delta tables
+│   ├── pipeline.py       # Orchestrates pipeline
+├── README.md             # Project documentation
+├── .gitignore            # Git ignore file
+├── LICENSE               # MIT License
 ```
 
+## 📈 Analytics Outputs
 
-this is my last readme so update it based on the updation
+### Customer Analytics:
+* Average order value
+* Total revenue and transactions
+* Revenue outlier detection
+
+### Product Analytics:
+* Top products by sales and revenue
+* Product details (description)
+
+### Category Analytics:
+* Category sales and revenue
+
+### Campaign Analytics:
+* Campaign revenue, transactions, and unique customers
+
+### Data Quality:
+* Null value reports
+* Outlier detection for quantity, price, and revenue
+* Quality metrics in analytics_db.data_quality_summary
+
+## 🏃‍♂️ Run the Pipeline
+
+In a Databricks notebook:
+
+```python
+%run /Repos/<your-repo>/src/pipeline.py
+```
+
+Query results:
+
+```sql
+SELECT * FROM analytics_db.customer_analytics LIMIT 5;
+SELECT * FROM analytics_db.data_quality_summary;
+```
+
+## 🛠️ Extend the Project
+
+* **Add Features**: Enhance analytics.py for time-series or segmentation
+* **Improve Quality**: Add more checks in data_cleaner.py
+* **Automate**: Schedule with Databricks Workflows
+* **Visualize**: Create dashboards in Databricks or Power BI
+
+## 📜 License
+
+MIT License - Copyright (c) 2025 Sangam Srivastav
+
+## 🙌 Acknowledgments
+
+* **Author**: Sangam Srivastav
+* **Tech Stack**: Apache Spark, Delta Lake, Azure Databricks
+* **Inspiration**: Modern data engineering for scalable analytics
