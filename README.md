@@ -53,7 +53,7 @@ This platform processes large-scale transaction data, delivering actionable insi
 ### 1. Clone the Repository
 
 ```bash
-[git clone https://github.com/Sangam919/Final-Project.git](https://github.com/Sangam919/Final-Project-Pyspark-problem-statement-.git)
+[https://github.com/Sangam919/Final-Project-Pyspark-problem-statement-.git]
 cd azure-transaction-analytics
 ```
 
